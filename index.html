@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ResuMate AI - ATS Optimizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Roboto+Mono:wght@400;500&family=Lato:wght@300;400;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .font-serif {
+        font-family: 'Merriweather', serif;
+      }
+      .font-mono {
+        font-family: 'Roboto Mono', monospace;
+      }
+      .font-lato {
+        font-family: 'Lato', sans-serif;
+      }
+      .font-open {
+        font-family: 'Open Sans', sans-serif;
+      }
+      
+      /* Dot Grid Pattern for Canvas */
+      .bg-dot-pattern {
+        background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+      .dark .bg-dot-pattern {
+        background-image: radial-gradient(circle, #334155 1px, transparent 1px);
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #475569;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+      .dark ::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+      
+      /* Shimmer Animation */
+      @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+      .animate-shimmer {
+        animation: shimmer 1.5s infinite linear;
+      }
+      
+      /* Print Styles for PDF Export */
+      @media print {
+        @page {
+          margin: 0; /* Let the resume container handle margins */
+          size: auto;
+        }
+        
+        html, body, #root {
+          height: auto !important;
+          overflow: visible !important;
+          background-color: white !important;
+          width: 100% !important;
+          position: static !important;
+        }
+
+        /* Hide all UI elements */
+        header, footer, .no-print, nav, aside {
+          display: none !important;
+        }
+        
+        /* Hide everything else */
+        body > *:not(#root) {
+          display: none !important;
+        }
+
+        /* Within root, hiding logic can be tricky with single page apps.
+           We use visibility hidden for the page content, and visible for the resume. */
+        #root * {
+          visibility: hidden;
+        }
+
+        /* Target the resume preview specifically */
+        #resume-preview, #resume-preview * {
+          visibility: visible;
+        }
+
+        #resume-preview {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 1.5cm !important; /* Ensure some padding for print */
+          box-shadow: none !important;
+          border: none !important;
+          z-index: 9999;
+          background: white !important;
+          color: black !important;
+          font-size: 12pt !important; /* Normalize font size for print */
+        }
+        
+        /* Reset any dark mode colors for print */
+        .dark #resume-preview {
+           background-color: white !important;
+           color: black !important;
+        }
+        .dark #resume-preview * {
+           color: black !important;
+           border-color: #e2e8f0 !important; /* slate-200 */
+        }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
+    "firebase/": "https://esm.sh/firebase@^12.6.0/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased overflow-hidden selection:bg-blue-100 dark:selection:bg-blue-900/50">
+    <div id="root" class="h-screen flex flex-col"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+{
+  "name": "ResuMate AI",
+  "description": "An intelligent resume optimizer and career coach that rewrites resumes to pass ATS filters and maximize recruiter impact using Gemini 2.5.",
+  "requestFramePermissions": []
+}
