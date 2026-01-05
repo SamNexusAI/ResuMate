@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AuthContextType, User, PlanLevel } from '../types';
+import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -20,62 +21,96 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Simulate initial auth check
-    const initAuth = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // Creating a mock user session for demo purposes if needed, 
-      // or start with null. App.tsx seems to handle null user.
-      // Let's start with null to force login flow or check local storage.
-      const storedUser = localStorage.getItem('resumate_user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    // Check active sessions
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { plan } = session.user.user_metadata || {};
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+          name: session.user.user_metadata?.full_name || 'User',
+          plan: (plan as PlanLevel) || 'free'
+        });
       }
       setIsLoading(false);
     };
 
-    initAuth();
+    getSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const { plan } = session.user.user_metadata || {};
+        setUser({
+          id: session.user.id,
+          email: session.user.email || '',
+          name: session.user.user_metadata?.full_name || 'User',
+          plan: (plan as PlanLevel) || 'free'
+        });
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async () => {
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const newUser: User = {
-      id: 'demo-user-123',
-      email: 'demo@resumate.ai',
-      name: 'Demo User',
-      plan: 'free'
-    };
-    setUser(newUser);
-    localStorage.setItem('resumate_user', JSON.stringify(newUser));
-    setIsLoading(false);
+    // For demo simplicity, we'll try Google OAuth, or fallback to email magic link
+    // Adjust based on your Supabase settings
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+        redirectTo: window.location.origin,
+      },
+    });
+
+    if (error) {
+      console.error("Login error:", error.message);
+      throw error;
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('resumate_user');
   };
 
+  // This should ideally be handled by a webhook listening to Stripe events.
+  // For now, this calls our Stripe service which (in a real backend app)
+  // would create a checkout session.
+  // After payment, the user is redirected back, and we might optimistically update the plan,
+  // or more securely, refresh the session from the server.
   const upgradeToPlan = async (plan: PlanLevel) => {
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // The actual upgrade trigger happens via Stripe redirect in App.tsx
+    // This context function might update the local state optimistically if needed
+    // But primarily we rely on App.tsx calling createCheckoutSession.
+    // For local state update after successful return:
     if (user) {
+      // Optimistic update (simulated for immediate feedback on success return)
       const updatedUser = { ...user, plan };
       setUser(updatedUser);
-      localStorage.setItem('resumate_user', JSON.stringify(updatedUser));
+
+      // Also attempt to update metadata in Supabase (insecure for real apps, better done via backend)
+      await supabase.auth.updateUser({
+        data: { plan: plan }
+      });
     }
-    setIsLoading(false);
   };
 
   const cancelSubscription = async () => {
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
     if (user) {
       const updatedUser = { ...user, plan: 'free' as PlanLevel };
       setUser(updatedUser);
-      localStorage.setItem('resumate_user', JSON.stringify(updatedUser));
+      await supabase.auth.updateUser({
+        data: { plan: 'free' }
+      });
     }
-    setIsLoading(false);
   };
 
   return (
